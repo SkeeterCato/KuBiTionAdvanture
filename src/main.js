@@ -79,6 +79,37 @@ function IsPC(){
 var IS_IPAD = (IsPC())?false:true;
 // IS_IPAD = true;
 
+function shouldForceMobileLayout(){
+    var userAgentInfo = navigator.userAgent || '';
+    var touchCapable = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
+    var knownMobile = /Android|iPhone|iPad|iPod|Windows Phone|Mobile|Via/i.test(userAgentInfo);
+    var coarsePointer = false;
+    if(window.matchMedia){
+        coarsePointer = window.matchMedia('(hover: none)').matches || window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(any-pointer: coarse)').matches;
+    }
+    return touchCapable && (knownMobile || coarsePointer || !IsPC());
+}
+
+function updateMobileLayoutClass(){
+    var root = document.documentElement;
+    if(!root)return;
+    var className = root.className || '';
+    var hasClass = /(^|\s)forceMobileLayout(\s|$)/.test(className);
+    if(shouldForceMobileLayout()){
+        if(!hasClass){
+            root.className = (className ? className + ' ' : '') + 'forceMobileLayout';
+        }
+    }else if(hasClass){
+        root.className = className.replace(/(^|\s)forceMobileLayout(?=\s|$)/g,' ').replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'');
+    }
+}
+
+updateMobileLayoutClass();
+if(window.addEventListener){
+    window.addEventListener('resize',updateMobileLayoutClass,false);
+    window.addEventListener('orientationchange',updateMobileLayoutClass,false);
+}
+
 
 $(function() {
     FastClick.attach(document.body);
@@ -533,14 +564,18 @@ var BtnComponent = React.createClass({
     getDisabled:function(){
         return this.props.disabled||!this.context.checkHaveResourceAll(this.props.requireList,true)
     },
-    handleClick:function(isRight){
+    handleClick:function(isRight,event){
+        if(event){
+            event.preventDefault && event.preventDefault();
+            event.stopPropagation && event.stopPropagation();
+        }
         if(this.getDisabled())return;
         this.context.AudioEngine.playEffect(this.props.sound);
 
         if(this.props.handleRightClick && isRight){
             this.props.handleRightClick()
         }else{
-            this.props.handleClick();
+            if(this.props.handleClick)this.props.handleClick();
         }
     },
     handleMouseEnter:function(){
@@ -548,7 +583,7 @@ var BtnComponent = React.createClass({
         if(this.props.handleMouseEnter)this.props.handleMouseEnter();
     },
     render:function(){
-        return <button style = {this.props.style} onContextMenu = {this.handleClick.bind(null,'right')} onClick = {this.handleClick.bind(null,false)} onMouseEnter = {this.handleMouseEnter} className = {this.props.className + (this.getDisabled()?" disabled":'')}>{this.props.desc||this.props.children}</button>
+        return <button type = "button" style = {this.props.style} onContextMenu = {this.handleClick.bind(null,'right')} onClick = {this.handleClick.bind(null,false)} onMouseEnter = {this.handleMouseEnter} className = {this.props.className + (this.getDisabled()?" disabled":'')}>{this.props.desc||this.props.children}</button>
     }
 });
 
@@ -1289,17 +1324,25 @@ var MobileBottomNavComponent = React.createClass({
             onMenu:null,
         }
     },
-    open:function(page){
+    preventDefault:function(event){
+        if(event){
+            event.preventDefault && event.preventDefault();
+            event.stopPropagation && event.stopPropagation();
+        }
+    },
+    open:function(page,event){
+        this.preventDefault(event);
         if(this.props.onOpen)this.props.onOpen(page);
     },
-    openMenu:function(){
+    openMenu:function(event){
+        this.preventDefault(event);
         if(this.props.onMenu)this.props.onMenu();
     },
     render:function(){
         return  <div className = "mobileBottomNav">
-                    <button className = {"mobileNavButton " + (this.props.active == 'bag'?'active':'')} onClick = {this.open.bind(this,'bag')}>背包</button>
-                    <button className = {"mobileNavButton " + (this.props.active == 'skill'?'active':'')} onClick = {this.open.bind(this,'skill')}>技能</button>
-                    <button className = "mobileNavButton" onClick = {this.openMenu}>菜单</button>
+                    <button type = "button" className = {"mobileNavButton " + (this.props.active == 'bag'?'active':'')} onClick = {this.open.bind(this,'bag')}>背包</button>
+                    <button type = "button" className = {"mobileNavButton " + (this.props.active == 'skill'?'active':'')} onClick = {this.open.bind(this,'skill')}>技能</button>
+                    <button type = "button" className = "mobileNavButton" onClick = {this.openMenu}>菜单</button>
                 </div>
     }
 });
@@ -1317,10 +1360,18 @@ var MobileSkillComponent = React.createClass({
             selectedSkill:null,
         }
     },
-    handleSkillTab:function(skill){
+    handleSkillTab:function(skill,event){
+        if(event){
+            event.preventDefault && event.preventDefault();
+            event.stopPropagation && event.stopPropagation();
+        }
         this.setState({selectedSkill:skill});
     },
-    close:function(){
+    close:function(event){
+        if(event){
+            event.preventDefault && event.preventDefault();
+            event.stopPropagation && event.stopPropagation();
+        }
         if(this.props.onClose)this.props.onClose();
     },
     render:function(){
@@ -1333,7 +1384,7 @@ var MobileSkillComponent = React.createClass({
             var result = [];
             for(var attr in skill){
                 if(!SKILL_DATA[attr].name)continue;
-                result.push(<button className = {'mobileSkillItem ' + (selectedSkill == attr?'active':'')} onClick = {this.handleSkillTab.bind(this,attr)} key = {SKILL_DATA[attr].name}>{SKILL_DATA[attr].name}{SKILL_DATA[attr].one?null:<span className = 'badge'>{skill[attr]}</span>}</button>)
+                result.push(<button type = "button" className = {'mobileSkillItem ' + (selectedSkill == attr?'active':'')} onClick = {this.handleSkillTab.bind(this,attr)} key = {SKILL_DATA[attr].name}>{SKILL_DATA[attr].name}{SKILL_DATA[attr].one?null:<span className = 'badge'>{skill[attr]}</span>}</button>)
             }
             return result;
         }
@@ -1394,7 +1445,7 @@ var MobileSkillComponent = React.createClass({
         return  <div className = "mobilePage mobileSkillPage">
                     <div className = "mobilePageHeader">
                         <span>技能</span>
-                        <button className = "mobileReturnButton" onClick = {this.close}>返回</button>
+                        <button type = "button" className = "mobileReturnButton" onClick = {this.close}>返回</button>
                     </div>
                     <div className = "mobilePageBody">
                         <div className = "mobileSkillList">{getSkillList.bind(this)()}</div>
@@ -1409,14 +1460,18 @@ var MobileBagPageComponent = React.createClass({
             onClose:null,
         }
     },
-    close:function(){
+    close:function(event){
+        if(event){
+            event.preventDefault && event.preventDefault();
+            event.stopPropagation && event.stopPropagation();
+        }
         if(this.props.onClose)this.props.onClose();
     },
     render:function(){
         return  <div className = "mobilePage mobileBagPage">
                     <div className = "mobilePageHeader">
                         <span>背包</span>
-                        <button className = "mobileReturnButton" onClick = {this.close}>返回</button>
+                        <button type = "button" className = "mobileReturnButton" onClick = {this.close}>返回</button>
                     </div>
                     <div className = "mobilePageBody">
                         <BagComponent/>

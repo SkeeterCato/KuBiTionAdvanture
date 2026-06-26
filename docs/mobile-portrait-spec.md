@@ -20,6 +20,7 @@ The project runs well on itch.io as an HTML5 game, but the current interface is 
 - Avoid changing gameplay rules, item exchange logic, combat logic, save data shape, or skill progression.
 - Prefer layout and touch-entry changes over data or rule changes.
 - Target the itch.io HTML5 embedded mobile portrait view.
+- Touch/mobile browsers may report the itch.io iframe as a desktop-like or landscape viewport. The app should still be able to force the mobile layout in those browsers.
 
 ## Non-goals
 
@@ -33,9 +34,11 @@ The project runs well on itch.io as an HTML5 game, but the current interface is 
 
 - The main action area remains usable in itch.io mobile portrait.
 - The top status bar remains visible without covering core actions.
+- The location display in the top status bar centers its text.
 - Bag can be opened from the bottom navigation.
 - Items can be selected to show detail, and existing use/equip actions are available from detail on touch devices.
 - Skill page shows a skill list and the selected skill description.
 - Menu opens full-screen and can return to the game.
+- Save/load/menu buttons do not trigger browser or iframe navigation on mobile browsers.
 - Desktop layout and existing desktop interactions still work.
 - Local page is verified before reporting completion; itch.io verification is reported separately if unavailable.

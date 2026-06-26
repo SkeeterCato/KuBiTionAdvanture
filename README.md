@@ -36,9 +36,10 @@ dist/超苦逼冒险者-v0.33-html5-flat.zip
 itch.io 页面建议设置：
 
 - Kind of project: `HTML`
-- Viewport dimensions: `960 x 600`
+- Viewport dimensions: `390 x 720` for portrait-first mobile publishing. `960 x 600` is still useful for desktop testing, but some mobile browsers report that iframe as landscape.
 - Fullscreen button: enabled
 - Mobile friendly: enabled
+- Size mode: `Manually set size`. `Auto-detect size (Unity HTML only)` does not apply to this non-Unity project.
 
 ## 存档
 
@@ -50,6 +51,8 @@ itch.io 页面建议设置：
 
 - Add mobile portrait layout for itch.io HTML5 embeds.
 - Save/load now preserves the "save when going out" setting.
+- Force mobile layout on touch/mobile browsers such as Via even when the itch.io iframe reports a desktop-like width or landscape orientation.
+- Prevent save/load/menu buttons from triggering mobile iframe default navigation.
 
 - 修复本地存档功能，新增存档导入和导出。
 - 为 itch.io 发布增加扁平结构 HTML5 包。
