@@ -243,7 +243,7 @@ var StateVectorComponent = React.createClass({
             }
             return 'rgb(' + r + ',' + g + ',' + b + ')';
         }
-        return  <div className = "stateVector" onMouseEnter = {this.showMsg} style = {{background:getColor.bind(this,Math.ceil(state.amount))()}} >
+        return  <div className = "stateVector" onMouseEnter = {this.showMsg} onClick = {this.showMsg} style = {{background:getColor.bind(this,Math.ceil(state.amount))()}} >
                     {stateName}
                     <span className = "badge"> {this.props.state == 'temp'?TEMP_DATA[this.context.getTempDesc()].name:Math.ceil(state.amount)} </span>
                 </div>
@@ -841,7 +841,6 @@ var NormalMenuComponent = React.createClass({
                         </label>
                         <BtnComponent handleClick = {this.context.setVolume}>声音：{this.context.AudioEngine.on?'开':'关'}</BtnComponent>
                         <BtnComponent handleClick = {this.setSort}>自动整理背包：{this.context.settings.sort?'开':'关'}</BtnComponent>
-                        <div><a target="blank" href = "http://1.maou.sinaapp.com/?page_id=47">作者的小站</a></div>
                     </div>
                 )
             }
@@ -1206,6 +1205,225 @@ var StateComponent = React.createClass({
                 </div>
     }
 })
+var MobileTopStatusComponent = React.createClass({
+    contextTypes:{
+        time:React.PropTypes.object.isRequired,
+        currentScene:React.PropTypes.string.isRequired,
+        season:React.PropTypes.string.isRequired,
+        generation:React.PropTypes.number.isRequired,
+    },
+    getTimeDisplay:function(time){
+        var hour = Math.floor(time);
+        if(hour < 2)return "半夜";
+        if(hour < 5)return "凌晨";
+        if(hour < 10)return "早晨";
+        if(hour < 13)return "中午";
+        if(hour < 17)return "下午";
+        if(hour < 19)return "傍晚";
+        if(hour < 22)return "晚上";
+        return "深夜";
+    },
+    getTimeColor:function(num){
+        var time = Math.abs(12-num);
+        var r,g,b;
+        if(time < 2){
+            r = 255; g = 255; b = 255;
+        }else if(time < 4){
+            r = Math.floor((2 - time)*(255-102)/2 + 255);
+            g = Math.floor((2 - time)*(255-153)/2 + 255);
+            b = Math.floor((2 - time)*(255-204)/2 + 255);
+        }else if(time < 7){
+            r = Math.floor((6 - time)*(102-66)/4 + 102);
+            g = Math.floor((6 - time)*(153-21)/4 + 153);
+            b = Math.floor((6 - time)*(204-0)/4 + 204);
+        }else if(time < 8){
+            r = Math.floor((9 - time)*(66-0)/3 + 66);
+            g = Math.floor((9 - time)*(21-0)/3 + 21);
+            b = Math.floor((9 - time)*(0-0)/3 + 0);
+        }else{
+            r = 0; g = 0; b = 0;
+        }
+        return 'rgb(' + r + ',' + g + ',' + b + ')';
+    },
+    getPlaceName:function(){
+        var scene = this.context.currentScene;
+        if(scene == 'home')return '家';
+        if(scene == 'branch')return '出门';
+        if(scene == 'dungeon')return '地牢';
+        return (PLACE_DATA[scene] && PLACE_DATA[scene].name) || '冒险';
+    },
+    render:function(){
+        var time = this.context.time;
+        var seasonDescMap = {
+            'spring':<span className = 'season' style = {{color:COLOR.GREEN}}>春</span>,
+            'summer':<span className = 'season' style = {{color:COLOR.RED}}>夏</span>,
+            'autumn':<span className = 'season' style = {{color:COLOR.YELLOW}}>秋</span>,
+            'winter':<span className = 'season' style = {{color:COLOR.BLUE}}>冬</span>,
+        };
+        function getStatesName(){
+            var result = [];
+            for(var attr in PLAYER_STATE_INIT){
+                result.push(<StateVectorComponent key = {attr} state = {attr}/>);
+            }
+            return result;
+        }
+        return  <div className = "mobileTopStatus">
+                    <div className = "mobileMetaRow">
+                        {this.context.generation?<span className = "mobileMeta">轮回{this.context.generation}</span>:null}
+                        <span className = "mobileMeta">{seasonDescMap[this.context.season]} 第<span className = "date">{time.day}</span>日</span>
+                        <span className = "mobileMeta">{this.getTimeDisplay(time.hour)}</span>
+                        <span style = {{backgroundColor:this.getTimeColor(time.hour)}} className = "mobileWeatherBox"></span>
+                        <span className = "mobilePlace">{this.getPlaceName()}</span>
+                    </div>
+                    <div className = "mobileStateRow">
+                        {getStatesName()}
+                    </div>
+                </div>
+    }
+});
+var MobileBottomNavComponent = React.createClass({
+    getDefaultProps:function(){
+        return {
+            active:'',
+            onOpen:null,
+            onMenu:null,
+        }
+    },
+    open:function(page){
+        if(this.props.onOpen)this.props.onOpen(page);
+    },
+    openMenu:function(){
+        if(this.props.onMenu)this.props.onMenu();
+    },
+    render:function(){
+        return  <div className = "mobileBottomNav">
+                    <button className = {"mobileNavButton " + (this.props.active == 'bag'?'active':'')} onClick = {this.open.bind(this,'bag')}>背包</button>
+                    <button className = {"mobileNavButton " + (this.props.active == 'skill'?'active':'')} onClick = {this.open.bind(this,'skill')}>技能</button>
+                    <button className = "mobileNavButton" onClick = {this.openMenu}>菜单</button>
+                </div>
+    }
+});
+var MobileSkillComponent = React.createClass({
+    contextTypes:{
+        skill:React.PropTypes.object.isRequired,
+    },
+    getDefaultProps:function(){
+        return {
+            onClose:null,
+        }
+    },
+    getInitialState:function(){
+        return {
+            selectedSkill:null,
+        }
+    },
+    handleSkillTab:function(skill){
+        this.setState({selectedSkill:skill});
+    },
+    close:function(){
+        if(this.props.onClose)this.props.onClose();
+    },
+    render:function(){
+        var skill = this.context.skill;
+        var selectedSkill = this.state.selectedSkill;
+        function getSkillList(){
+            if(getLength(skill)==0){
+                return <p className = "mobileEmptyText">你还没有习得任何技能</p>
+            }
+            var result = [];
+            for(var attr in skill){
+                if(!SKILL_DATA[attr].name)continue;
+                result.push(<button className = {'mobileSkillItem ' + (selectedSkill == attr?'active':'')} onClick = {this.handleSkillTab.bind(this,attr)} key = {SKILL_DATA[attr].name}>{SKILL_DATA[attr].name}{SKILL_DATA[attr].one?null:<span className = 'badge'>{skill[attr]}</span>}</button>)
+            }
+            return result;
+        }
+        function getSkillDesc(){
+            selectedSkill = selectedSkill||(getFirst(skill) && getFirst(skill).attr)||null;
+            if(!selectedSkill)return null;
+            function getAmount(){
+                var lv = skill[selectedSkill];
+                var buffTotal = lv * SKILL_DATA[selectedSkill].buff;
+                var desc_1,desc_2;
+                switch(selectedSkill){
+                    case 'greedy':
+                    case 'durable':
+                    case 'physique':
+                    case 'lucky':
+                    case 'fighter':
+                        desc_1 = '当前加成:';
+                        desc_2 = Math.round(100 * buffTotal) + '%';
+                        break;
+                    case 'magic':
+                        desc_1 = '当前魔法加成:';
+                        desc_2 = Math.round(100 * buffTotal) + '%';
+                        break;
+                    case 'melee':
+                        desc_1 = '当前近战加成:';
+                        desc_2 = Math.round(100 * buffTotal) + '%';
+                        break;
+                    case 'shoot':
+                        desc_1 = '当前远程加成:';
+                        desc_2 = Math.round(100 * buffTotal) + '%';
+                        break;
+                    case 'alco':
+                        desc_1 = '当前酿酒加成:';
+                        desc_2 = Math.round(100 * buffTotal) + '%';
+                        break;
+                    case 'farm':
+                        desc_1 = '当前种植收益加成:';
+                        desc_2 = Math.round(100 * buffTotal) + '%';
+                        break;
+                    case 'def':
+                        var buffTotal =  100 - Math.round(100 * (Math.pow(SKILL_DATA[selectedSkill].buff,lv) * 0.95) + 0.05 * (10/(10 + lv)));
+                        desc_1 = '当前伤害减免:';
+                        desc_2 = (buffTotal) + '%';
+                        break;
+                    case 'agile':
+                        desc_1 = '当前射程加成:';
+                        desc_2 = buffTotal;
+                        break;
+                }
+                return <p>{desc_1}<span style = {{color:COLOR.GREEN}}>{desc_2}</span></p>
+            }
+            return <div>
+                        <h4>{SKILL_DATA[selectedSkill].name}</h4>
+                        <p>{SKILL_DATA[selectedSkill].desc}</p>
+                        {getAmount.bind(this)()}
+                    </div>
+        }
+        return  <div className = "mobilePage mobileSkillPage">
+                    <div className = "mobilePageHeader">
+                        <span>技能</span>
+                        <button className = "mobileReturnButton" onClick = {this.close}>返回</button>
+                    </div>
+                    <div className = "mobilePageBody">
+                        <div className = "mobileSkillList">{getSkillList.bind(this)()}</div>
+                        <div className = "mobileSkillDesc">{getSkillDesc.bind(this)()}</div>
+                    </div>
+                </div>
+    }
+});
+var MobileBagPageComponent = React.createClass({
+    getDefaultProps:function(){
+        return {
+            onClose:null,
+        }
+    },
+    close:function(){
+        if(this.props.onClose)this.props.onClose();
+    },
+    render:function(){
+        return  <div className = "mobilePage mobileBagPage">
+                    <div className = "mobilePageHeader">
+                        <span>背包</span>
+                        <button className = "mobileReturnButton" onClick = {this.close}>返回</button>
+                    </div>
+                    <div className = "mobilePageBody">
+                        <BagComponent/>
+                    </div>
+                </div>
+    }
+});
 var ScienceComponent = React.createClass({
     contextTypes:{
         getScienceLevel     :React.PropTypes.func.isRequired,
@@ -5105,6 +5323,7 @@ var MainComponent = React.createClass({
             isDueling       :false,
             menuDesc        :{},
             menuHint        :0,
+            mobilePage      :'',
             misk            :0,
             msgList         :[],
             mstState        :{},//怪物的状态
@@ -5588,6 +5807,15 @@ var MainComponent = React.createClass({
             }
         }
         this.setState(obj);
+    },
+    openMobilePage:function(page){
+        this.setState({mobilePage:page});
+    },
+    closeMobilePage:function(){
+        this.setState({mobilePage:''});
+    },
+    openMobileMenu:function(){
+        this.setState({mobilePage:'',showMenu:'menu'});
     },
     getMaxTimeOfRequire:function(require){
         //仅用于家内物品最大制造个数的判断
@@ -6319,11 +6547,24 @@ var MainComponent = React.createClass({
          event.preventDefault();
     },
     render:function() {
+        function getMobilePage(){
+            switch(this.state.mobilePage){
+                case 'bag':
+                    return <MobileBagPageComponent onClose = {this.closeMobilePage}/>;
+                case 'skill':
+                    return <MobileSkillComponent onClose = {this.closeMobilePage}/>;
+            }
+            return null;
+        }
         return  <div className = "main clearFix"  onContextMenu = {this.preventDefault} onSelect = {this.preventDefault}>
                     <MenuComponent type = {this.state.showMenu}/>
-                    <AdvanComponent misk = {this.state.misk} progress = {this.state.progress}>{this.state.wind}</AdvanComponent>
-                    <BagComponent items = {this.state.boxSaveData.bag.things} size = {this.state.boxSaveData.bag.size} />
-
+                    <MobileTopStatusComponent/>
+                    {getMobilePage.bind(this)()}
+                    <div className = "desktopGameArea clearFix">
+                        <AdvanComponent misk = {this.state.misk} progress = {this.state.progress}>{this.state.wind}</AdvanComponent>
+                        <BagComponent items = {this.state.boxSaveData.bag.things} size = {this.state.boxSaveData.bag.size} />
+                    </div>
+                    <MobileBottomNavComponent active = {this.state.mobilePage} onOpen = {this.openMobilePage} onMenu = {this.openMobileMenu}/>
                 </div>;
     },
     componentWillMount:function(){
@@ -6349,6 +6590,7 @@ var MainComponent = React.createClass({
         data.detailedType = '';
         data.detailedList = [];
         data.currentBox = '';
+        data.mobilePage = '';
 
         if(!data.generation){
             data.generation = 0;
@@ -6358,6 +6600,15 @@ var MainComponent = React.createClass({
         }
         if(!data.robberSaveData){
             data.robberSaveData = ROBBER_INIT;
+        }
+        if(!data.settings){
+            data.settings = {sort:false,autoSave:false};
+        }
+        if(data.settings.sort == undefined){
+            data.settings.sort = false;
+        }
+        if(data.settings.autoSave == undefined){
+            data.settings.autoSave = false;
         }
         if(data.dungeonSaveData.stairData == undefined){
             data.dungeonSaveData.stairData = {};
@@ -6429,6 +6680,13 @@ var MainComponent = React.createClass({
         this.setState({boxSaveData:boxSaveData});
     },
     makeSaveData:function(){
+        var settings = clone(this.state.settings);
+        if(settings.sort == undefined){
+            settings.sort = false;
+        }
+        if(settings.autoSave == undefined){
+            settings.autoSave = false;
+        }
         return {
             boxSaveData:clone(this.state.boxSaveData),
             buildingSaveData:clone(this.state.buildingSaveData),
@@ -6448,6 +6706,7 @@ var MainComponent = React.createClass({
             playerState:clone(this.state.playerState),
             robberSaveData:clone(this.state.robberSaveData),
             season:this.state.season,
+            settings:settings,
             skill:clone(this.state.skill),
             startSeason:this.state.startSeason,
             time:clone(this.state.time),

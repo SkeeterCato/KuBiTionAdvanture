@@ -38,7 +38,7 @@ itch.io 页面建议设置：
 - Kind of project: `HTML`
 - Viewport dimensions: `960 x 600`
 - Fullscreen button: enabled
-- Mobile friendly: disabled
+- Mobile friendly: enabled
 
 ## 存档
 
@@ -47,6 +47,9 @@ itch.io 页面建议设置：
 ## ChangeLog
 
 ### v0.33
+
+- Add mobile portrait layout for itch.io HTML5 embeds.
+- Save/load now preserves the "save when going out" setting.
 
 - 修复本地存档功能，新增存档导入和导出。
 - 为 itch.io 发布增加扁平结构 HTML5 包。
