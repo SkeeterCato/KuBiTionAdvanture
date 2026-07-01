@@ -6,9 +6,12 @@ function read(path) {
 }
 
 const sourceCss = read('index.css');
-const distCss = read('dist/itch-html5-v0.33-flat/index.css');
+const distDir = fs.existsSync('dist/itch-html5-v0.34-flat')
+  ? 'dist/itch-html5-v0.34-flat'
+  : 'dist/itch-html5-v0.33-flat';
+const distCss = read(`${distDir}/index.css`);
 const sourceMain = read('src/main.js');
-const distMain = read('dist/itch-html5-v0.33-flat/main.js');
+const distMain = read(`${distDir}/main.js`);
 
 function assertMobileClassSupport(css, label) {
   assert(

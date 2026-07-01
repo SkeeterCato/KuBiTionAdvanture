@@ -4406,12 +4406,8 @@ var BattleComponent = React.createClass({
             break;
             case 'deadStaff':
             var bag = this.context.boxSaveData.bag.things;
-            var amount = 0;
-            for(var attr in bag){
-                amount += bag[attr] * ((attr == 'humanMeat')?2:0);
-                // amount += bag[attr] * ((ITEM_DATA[attr].type == 'weapon' && ITEM_DATA[attr].weaponType == 'melee')?0.5:0);
-            }
-            dmg += amount;
+            var amount = Math.min(bag.humanMeat || 0, 1000);
+            dmg += amount * 2;
             break;
         }
         dmg *= (1 + skillBuff) * (1 + equipBuff) * (1 + preBuff) * (1/(mstState.hpMul || 1));
